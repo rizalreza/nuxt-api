@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Auth;
 use App\Http\Controllers\Controller;
 use Tymon\JWTAuth\JWTAuth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 
 class LoginController extends Controller
@@ -42,6 +43,14 @@ class LoginController extends Controller
 
     public function login(Request $request)
     {
+        $validator = $this->validator($request->all());
+        if ($validator->fails()) {
+            return \response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
         if($this->hasTooManyLoginAttempts($request)) {
             $this->fireLockoutEvent($request);
 
@@ -58,9 +67,8 @@ class LoginController extends Controller
                 return response()->json([
                     'success' => false,
                     'errors' => [
-                        'email' => [
-                            'Invalid email or password'
-                        ]
+                        'email' => ['Invalid email or password'],
+                        'password' => ['Invalid email or password']
                     ]
                 ], 422);
             }
@@ -69,9 +77,8 @@ class LoginController extends Controller
             return response()->json([
                 'success' => false,
                 'errors' => [
-                    'email' => [
-                        'Invalid email or password'
-                    ]
+                    'email' => ['Invalid email or password'],
+                    'password' => ['Invalid email or password']
                 ]
             ], 422);
         }
@@ -82,5 +89,13 @@ class LoginController extends Controller
             'token' => $token,
         ], 200);
 
+    }
+
+    protected function validator(array $data)
+    {
+        return Validator::make($data, [
+            'email' => ['required', 'email'],
+            'password' => ['required'],
+        ]);
     }
 }
